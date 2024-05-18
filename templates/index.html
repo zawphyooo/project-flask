@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block profile %}
+    {{profile}}
+{% endblock %}
+
+{% block main %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="text-start">Symbol</th>
+                <th class="text-end">Shares</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for share in shares %}
+
+                    <tr>
+                        <td class="text-start">{{ share['symbol'] }}</td>
+                        <td class="text-end">{{ share['shares'] }}</td>
+                        <td class="text-end">${{ "{:.2f}".format(share['price']) }}</td>
+                        <td class="text-end">${{ "{:.2f}".format(share['total']) }}</td>
+                    </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td class="border-0 fw-bold text-end" colspan="3">Cash</td>
+                <td class="border-0 text-end">${{ "{:.2f}".format(totalSharesAmt) }}</td>
+            </tr>
+            <tr>
+                <td class="border-0 fw-bold text-end" colspan="3">TOTAL</td>
+                <td class="border-0 w-bold text-end">${{ "{:.2f}".format(grandTotl) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
