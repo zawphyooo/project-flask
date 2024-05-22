@@ -1,0 +1,11 @@
+# Ignore virtual environment
+flaskenv/
+
+# Ignore Python compiled files
+*.pyc
+__pycache__/
+
+# Ignore other common files
+.DS_Store
+.env
+*.log
