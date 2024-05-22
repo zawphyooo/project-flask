@@ -4,7 +4,7 @@ flaskenv/
 # Ignore Python compiled files
 *.pyc
 __pycache__/
-
+app/__pycache__/
 # Ignore other common files
 .DS_Store
 .env
