@@ -281,11 +281,13 @@ def forgetpass():
 @main.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
     token = request.args.get('token')
+    print(f"Token {token}")
     if not token:
         return apology("Invalid or missing token", 400)
     
     # Find the user by the token
     user = db.execute("SELECT * FROM users WHERE token = ?", token)
+
     if not user:
         return apology("Invalid or expired token", 400)
     
@@ -305,7 +307,7 @@ def reset_password():
         flash("Your password has been reset. Please log in.")
         return render_template("login.html")
     
-    return render_template("reset_password.html", profile = user[0])
+    return render_template("reset_password.html", token=token, profile = user[0])
 
 @main.route("/changepass", methods=["GET", "POST"])
 @login_required
