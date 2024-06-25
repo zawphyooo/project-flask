@@ -1,11 +1,13 @@
 # Ignore virtual environment
 flaskenv/
+/flaskenv/
 
 # Ignore Python compiled files
 *.pyc
 __pycache__/
 app/__pycache__/
 # Ignore other common files
+flask_session
 .DS_Store
 .env
 *.log

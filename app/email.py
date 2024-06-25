@@ -2,6 +2,9 @@ import sqlite3
 from flask_mail import Message, Mail
 from app import app
 from cryptography.fernet import Fernet
+import os
+import hashlib
+import time
 
 # Define the encryption key directly in the code
 key = b'zNrfAzwA9_Nlg4ghGb9_aZ6ftkn1rTEgb6vCz7-Oy3c='  # Replace with your actual generated key
@@ -53,3 +56,10 @@ def send_email(subject, recipients, text_body, html_body):
             print("Failed to send email.")
             print("Error:", e)
             return f"Failed to send email. Error: {e}", 500
+        
+
+def generate_token(email):
+    salt = os.urandom(16)
+    token = hashlib.sha256(salt + email.encode() + str(time.time()).encode()).hexdigest()
+    return token
+

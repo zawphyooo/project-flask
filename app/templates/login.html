@@ -8,12 +8,28 @@
 
 {% block main %}
     <form action="/login" method="post">
-        <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Username" type="text">
+        <div class="d-flex justify-content-center">
+            <div class="mb-3 position-relative" style="width: 300px;">
+                <input autocomplete="off" autofocus class="form-control pr-5" name="email" placeholder="Email" type="email">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <div class="mb-3 position-relative" style="width: 300px;">
+                <input class="form-control pr-5" autofocus id="password" name="password" placeholder="Password"
+                    type="password" required>
+                <button type="button" class="btn btn-link position-absolute top-50 translate-middle-y btn-no-outline"
+                    style="right: 10px;" id="togglePasswordVisibility" onmousedown="showPassword('password')"
+                    onmouseup="hidePassword('password')" onmouseleave="hidePassword('password')">
+                    <i class="fa fa-eye"></i>
+                </button>
+        </div>
         </div>
         <div class="mb-3">
-            <input class="form-control mx-auto w-auto" name="password" placeholder="Password" type="password">
+            <button class="btn btn-primary" type="submit">Log In</button>
+            <button class="btn btn-secondary" type="button" onclick="window.location.href='/forgetpass'">Forget Password</button>
         </div>
-        <button class="btn btn-primary" type="submit">Log In</button>
+
     </form>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 {% endblock %}

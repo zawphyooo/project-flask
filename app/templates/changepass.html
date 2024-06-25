@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Change Password
+{% endblock %}
+
+{% block profile %}
+    {{ profile['username'] }}
+{% endblock %}
+
+{% block main %}
+<!--
+<form action="/changepass" method="post">
+    <div class="mb-3">
+        <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="currentpass" placeholder="Current Password" type="password">
+    </div>
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" name="newpassword" placeholder="New Password" type="password">
+    </div>
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" name="confirmation" placeholder="Confirm New Password" type="password">
+    </div>
+    <button class="btn btn-primary" type="submit">Update</button>
+</form>
+
+-->
+<div class="container mt-5">
+    <h2>Change Password</h2>
+    <form id="changePasswordForm" action="/changepass" method="post">
+        <div class="mb-3">
+            <label for="currentpass" class="form-label">Current Password</label>
+            <input type="password" class="form-control mx-auto w-auto" id="currentpass" name="currentpass" required>
+        </div>
+        <div class="mb-3">
+            <label for="newpassword" class="form-label">New Password</label>
+            <input type="password" class="form-control mx-auto w-auto" id="newpassword" name="newpassword" required>
+        </div>
+        <div class="mb-3">
+            <label for="confirmation" class="form-label">Confirm New Password</label>
+            <input type="password" class="form-control mx-auto w-auto" id="confirmation" name="confirmation" required>
+        </div>
+        <div id="passwordMismatchMessage" class="text-danger" style="display: none;">
+            New password and confirmation password do not match.
+        </div>
+        <button type="submit" class="btn btn-primary">Update Password</button>
+    </form>
+
+    <script>
+        document.getElementById('changePasswordForm').addEventListener('submit', function(event) {
+            var newPassword = document.getElementById('newpassword').value;
+            var confirmation = document.getElementById('confirmation').value;
+            if (newPassword !== confirmation) {
+                document.getElementById('passwordMismatchMessage').style.display = 'block';
+                event.preventDefault();
+            } else {
+                document.getElementById('passwordMismatchMessage').style.display = 'none';
+            }
+        });
+    </script>
+</div>
+{% endblock %}

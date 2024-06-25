@@ -1,4 +1,11 @@
-#!/bin/bash
+#!/bin/sh
+
+# Activate the virtual environment
 source flaskenv/bin/activate
-export FLASK_APP=app.py
-flask run --host=0.0.0.0 --port=5000
+
+# Set environment variables
+export FLASK_APP=app
+export FLASK_DEBUG=1
+
+# Run Flask application
+flask run --host=192.168.1.119 --port=5005

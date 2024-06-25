@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, session, redirect, flash
+from flask import Blueprint, render_template, request, session, redirect, flash, url_for
 from cs50 import SQL
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from app.helpers import apology, login_required, lookup, usd
 from app import db
+
 
 main = Blueprint('main', __name__)
 
@@ -93,6 +94,7 @@ def buy():
         elif sharesCost > usrBal:
             return apology("You don't have enough cash")
 
+        flash("Successfully bought the shares")
         return redirect("/")
 
     else:
@@ -113,14 +115,14 @@ def login():
     session.clear()
 
     if request.method == "POST":
-        if not request.form.get("username"):
-            return apology("must provide username")
+        if not request.form.get("email"):
+            return apology("must provide email")
         if not request.form.get("password"):
             return apology("must provide password")
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            return apology("invalid username and/or password")
+            return apology("invalid email and/or password")
 
         session["user_id"] = rows[0]["id"]
         flash("Login successful")
@@ -162,6 +164,8 @@ def register():
     if request.method == "POST":
         if not request.form.get("username"):
             return apology("must provide username")
+        if not request.form.get("email"):
+            return apology("must provide email")
         if not request.form.get("password"):
             return apology("must provide password", 400)
         if request.form.get("password") != request.form.get("confirmation"):
@@ -169,14 +173,15 @@ def register():
 
         usrpwd = request.form.get("password")
         usrpwdHash = generate_password_hash(usrpwd)
-
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        
+        #Check if the email already exists 
+        rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
         if len(rows) != 1:
-            db.execute("INSERT INTO users (username, hash) VALUES (?, ?)", request.form.get("username"), usrpwdHash)
+            db.execute("INSERT INTO users (username, hash, email) VALUES (?, ?, ?)", request.form.get("username"), usrpwdHash, request.form.get("email"))
         else:
-            return apology("User " + rows[0]['username'] + " already exists")
+            return apology("email " + rows[0]['email'] + " already exists")
 
-        user = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        user = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
         session["user_id"] = user[0]["id"]
         return redirect("/")
 
@@ -220,7 +225,115 @@ def sell():
         symbols = db.execute("SELECT symbol FROM shares WHERE user_id = ?", usrid)
         return render_template("sell.html", symbols=symbols, profile=profile[0]['username'])
 
-@main.route("/profile")
+@main.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    return apology("Work in progress", 400)
+    user_id = session.get('user_id')
+    profile = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
+
+    if request.method == "POST":
+        # Handle multi-factor authentication update
+        enable_2fa = request.form.get("2fa") == "on"
+        db.execute("UPDATE users SET mfactor = ? WHERE id = ?", enable_2fa, user_id)
+
+        flash("Profile updated successfully.", "success")
+        return redirect(url_for('main.profile'))
+
+    return render_template("profile.html", profile=profile)
+
+
+@main.route("/forgetpass", methods = ["GET", "POST"])
+def forgetpass():
+    from app.email import generate_token
+    from app.email import send_email
+    if request.method == "POST":
+        email = request.form.get("email")
+        print(f"email {email}")
+    # check if email exists in the database
+        user = db.execute("SELECT * FROM users WHERE email = ?", email)
+        if user:
+            token = generate_token(email)
+            print(f"token {token}, email {email}")
+            # Store the token in database
+            db.execute("UPDATE users SET token = ? WHERE email = ?", token, email)
+
+            # Send email with link
+
+            reset_url = url_for('main.reset_password', token=token, _external=True)
+            print(f'The url : {reset_url}')
+
+            # Send the email with the reset link
+            subject = "Flask Server Password Reset"
+            text_body = f"Please click the following link to reset your password: {reset_url}"
+            html_body = f"<p>Please click the following link to reset your password:</p><p><a href='{reset_url}'>{reset_url}</a></p> </br> <p>Flask Server</p>"
+            
+            message, status_code = send_email(subject, [email], text_body, html_body)
+            flash(message)
+            #flash("Password Reset Email sent !")
+            return render_template("login.html")
+
+        
+        return apology("Email not found in the System", 400)
+    else:
+        return(render_template("forgetpass.html"))
+    
+
+@main.route("/reset_password", methods=["GET", "POST"])
+def reset_password():
+    token = request.args.get('token')
+    if not token:
+        return apology("Invalid or missing token", 400)
+    
+    # Find the user by the token
+    user = db.execute("SELECT * FROM users WHERE token = ?", token)
+    if not user:
+        return apology("Invalid or expired token", 400)
+    
+    if request.method == "POST":
+        new_password = request.form.get("password")
+        if not new_password:
+            return apology("Must provide a new password", 400)
+        
+        if request.form.get("password") != request.form.get("confirmation"):
+            flash("Passwords do not match !!!")
+            return render_template("reset_password.html", token=token)
+        
+        # Update the user's password
+        hashed_password = generate_password_hash(new_password)
+        db.execute("UPDATE users SET hash = ?, token = NULL WHERE id = ?", hashed_password, user[0]["id"])
+        
+        flash("Your password has been reset. Please log in.")
+        return render_template("login.html")
+    
+    return render_template("reset_password.html", profile = user[0])
+
+@main.route("/changepass", methods=["GET", "POST"])
+@login_required
+def change_pass():
+    user_id = session.get('user_id')
+    profile = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
+    if request.method == "POST":
+        if not request.form.get("currentpass"):
+            flash("You need to provide current password !")
+            return redirect("/changepass")
+        if not request.form.get("newpassword"):
+            flash("You need to provide new password !")
+            return redirect("/changepass")
+
+        rows = db.execute("SELECT * FROM users WHERE id = ?", user_id)
+        if not check_password_hash(rows[0]["hash"], request.form.get("currentpass")):
+            flash("Invalid Current Password !!!")
+            return redirect("/changepass")
+        
+        if request.form.get("newpassword") != request.form.get("confirmation"):
+            flash("New and Confirmation Passwords do not match !!!")
+            return redirect("/changepass")
+        
+        hashed_password = generate_password_hash(request.form.get("newpassword"))
+        db.execute("UPDATE users SET hash = ?, token = NULL WHERE id = ?", hashed_password, user_id)
+        
+        flash("Password Updated Successfully")
+        return redirect("/profile")
+
+    else:
+        return render_template("changepass.html", profile = profile)

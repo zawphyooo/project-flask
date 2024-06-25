@@ -1,46 +1,11 @@
-{% extends "layout.html" %}
-
-{% block title %}
-    Home
-{% endblock %}
-
-{% block profile %}
-    {{profile}}
-{% endblock %}
-
-{% block main %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th class="text-start">Symbol</th>
-                <th class="text-end">Shares</th>
-                <th class="text-end">Price</th>
-                <th class="text-end">TOTAL</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for share in shares %}
-
-                    <tr>
-                        <td class="text-start">{{ share['symbol'] }}</td>
-                        <td class="text-end">{{ share['shares'] }}</td>
-                        <td class="text-end">${{ "{:.2f}".format(share['price']) }}</td>
-                        <td class="text-end">${{ "{:.2f}".format(share['total']) }}</td>
-                    </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td class="border-0 fw-bold text-end" colspan="3">Cash</td>
-                <td class="border-0 text-end">${{ "{:.2f}".format(totalSharesAmt) }}</td>
-            </tr>
-            <tr>
-                <td class="border-0 fw-bold text-end" colspan="3">TOTAL</td>
-                <td class="border-0 w-bold text-end">${{ "{:.2f}".format(grandTotl) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price</title>
+</head>
+<body>
     <h1>Stock Price of <span id="company-name">AAPL</span></h1>
     <p>Current Price: $<span id="stock-price">Loading...</span></p>
 
@@ -52,6 +17,8 @@
             const url = `https://query1.finance.yahoo.com/v7/finance/download/${encodeURIComponent(symbol)}?period1=${start}&period2=${end}&interval=1d&events=history&includeAdjustedClose=true`;
 
             try {
+                console.log("Fetching data from URL:", url);
+
                 const response = await fetch(url, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0',
@@ -59,14 +26,25 @@
                     }
                 });
 
+                console.log("Response status:", response.status);
+
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
                 }
 
                 const data = await response.text();
+                console.log("Fetched Data:", data);
+
                 const lines = data.split('\n');
+                if (lines.length < 2) {
+                    throw new Error("No data available or malformed CSV");
+                }
+
                 const lastLine = lines[lines.length - 2]; // The second last line contains the latest data
+                console.log("Last Line:", lastLine);
+
                 const [date, open, high, low, close, adjClose, volume] = lastLine.split(',');
+                console.log("Parsed Adjusted Close Price:", adjClose);
 
                 return parseFloat(adjClose).toFixed(2); // Adjusted close price
             } catch (error) {
@@ -88,5 +66,5 @@
 
         document.addEventListener('DOMContentLoaded', displayStockPrice);
     </script>
-
-{% endblock %}
+</body>
+</html>
