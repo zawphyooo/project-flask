@@ -124,12 +124,58 @@ def login():
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
             return apology("invalid email and/or password")
 
-        session["user_id"] = rows[0]["id"]
-        flash("Login successful")
-        return redirect("/")
+        usr_id = rows[0]["id"]
+        user = rows[0]["username"]
+        email = rows[0]["email"]
+
+        
+        if rows[0]["mfactor"] == 1:
+            print("MFA Enabled")
+            
+            session["id_for_otp"] = usr_id
+            session["user_for_otp"] = user
+            session["email_for_otp"] = email
+            message, status_code = sendOtp(usr_id,user,email)
+            print(f"message {message}")
+            print(f"status code {status_code}")
+            return render_template("mfa.html", name = user)
+
+        else:
+
+            session["user_id"] = usr_id
+            flash("Login successful")
+            return redirect("/")
 
     else:
         return render_template("login.html")
+    
+@main.route("/login_otp", methods=["GET", "POST"])
+def login_opt():
+    from app.otp import validate_otp
+    usr_id = session.get('id_for_otp')
+    user = session.get('user_for_otp')
+    otp = request.form.get('loginotp')
+    
+    if request.method == "POST":
+
+        result = validate_otp(usr_id,otp)
+        if result == True:
+            session.clear()
+            session["user_id"] = usr_id
+            flash("Login successful")
+            return redirect("/")
+
+        else:
+            flash("Wrong OTP")
+            return render_template("mfa.html", user = user)
+        
+
+    else:
+        return redirect("/login_otp")
+
+
+
+    
 
 @main.route("/logout")
 def logout():
@@ -180,8 +226,9 @@ def register():
             db.execute("INSERT INTO users (username, hash, email) VALUES (?, ?, ?)", request.form.get("username"), usrpwdHash, request.form.get("email"))
         else:
             return apology("email " + rows[0]['email'] + " already exists")
-
+        
         user = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
+
         session["user_id"] = user[0]["id"]
         return redirect("/")
 
@@ -241,7 +288,7 @@ def profile():
 
     return render_template("profile.html", profile=profile)
 
-
+# once user click forget password
 @main.route("/forgetpass", methods = ["GET", "POST"])
 def forgetpass():
     from app.email import generate_token
@@ -260,7 +307,7 @@ def forgetpass():
             # Send email with link
 
             reset_url = url_for('main.reset_password', token=token, _external=True)
-            print(f'The url : {reset_url}')
+            #print(f'The url : {reset_url}')
 
             # Send the email with the reset link
             subject = "Flask Server Password Reset"
@@ -339,3 +386,22 @@ def change_pass():
 
     else:
         return render_template("changepass.html", profile = profile)
+    
+
+def sendOtp(usr_id, user, email):
+    from app.otp import generate_otp, store_otp
+    from app.email import send_email
+                
+    loginOTP = generate_otp(4)
+    print(f"generated OTP {loginOTP}")
+
+    store_otp(usr_id,loginOTP)
+       
+    # Send the email with the reset link
+    subject = "Flask Server OTP"
+    text_body = f"Please use this OTP: {loginOTP} to login into your account"
+    html_body = f"<p>Hi {user},</p></br><p>Please use this OTP: {loginOTP} to login into your account</p> </br> <p>Flask Server</p>"
+    message, status_code = send_email(subject, [email], text_body, html_body)
+    return message, status_code
+    # to add return for failure or success [todo]
+

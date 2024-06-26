@@ -1,4 +1,8 @@
+#not using cs50 SQL but just sqlite3
+#it needs conn.cursor()
 import sqlite3
+#--#
+
 from flask_mail import Message, Mail
 from app import app
 from cryptography.fernet import Fernet

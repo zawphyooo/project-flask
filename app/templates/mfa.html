@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    MFA
+{% endblock %}
+
+
+
+{% block main %}
+    <form action="/login_otp" method="post">
+        <p>Hi {{name}}, Please enter OTP sent to your email</p>
+
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="loginotp" placeholder="OTP" type="text">
+            </div>
+
+
+        <div class="mb-3">
+            <button class="btn btn-primary" type="submit">Submit</button>
+            <button class="btn btn-secondary" type="button" onclick="window.location.href='/forgetpass'">Resend OTP</button>
+        </div>
+
+    </form>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+{% endblock %}
