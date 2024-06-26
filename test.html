@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Price</title>
+</head>
+<body>
+    <h1>Stock Price of <span id="company-name">AAPL</span></h1>
+    <p>Current Price: $<span id="stock-price">Loading...</span></p>
+
+    <script>
+        async function fetchStockPrice(symbol) {
+            const end = Math.floor(new Date().getTime() / 1000); // Current time in Unix timestamp
+            const start = end - 7 * 24 * 60 * 60; // One week ago
+
+            const url = `https://query1.finance.yahoo.com/v7/finance/download/${encodeURIComponent(symbol)}?period1=${start}&period2=${end}&interval=1d&events=history&includeAdjustedClose=true`;
+
+            try {
+                console.log("Fetching data from URL:", url);
+
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0',
+                        'Accept': '*/*'
+                    }
+                });
+
+                console.log("Response status:", response.status);
+
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+
+                const data = await response.text();
+                console.log("Fetched Data:", data);
+
+                const lines = data.split('\n');
+                if (lines.length < 2) {
+                    throw new Error("No data available or malformed CSV");
+                }
+
+                const lastLine = lines[lines.length - 2]; // The second last line contains the latest data
+                console.log("Last Line:", lastLine);
+
+                const [date, open, high, low, close, adjClose, volume] = lastLine.split(',');
+                console.log("Parsed Adjusted Close Price:", adjClose);
+
+                return parseFloat(adjClose).toFixed(2); // Adjusted close price
+            } catch (error) {
+                console.error('Error fetching stock price:', error);
+                return null;
+            }
+        }
+
+        async function displayStockPrice() {
+            const symbol = 'AAPL'; // Replace with desired stock symbol
+            const price = await fetchStockPrice(symbol);
+
+            if (price) {
+                document.getElementById('stock-price').textContent = price;
+            } else {
+                document.getElementById('stock-price').textContent = 'Error fetching price';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', displayStockPrice);
+    </script>
+</body>
+</html>

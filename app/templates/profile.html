@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Profile
+{% endblock %}
+
+{% block profile %}
+    {{ profile['username'] }}
+{% endblock %}
+
+{% block main %}
+    <div class="container mt-5">
+        <h2>Profile Information</h2>
+        <form action="/profile" method="post" enctype="multipart/form-data">
+            <!-- Display Personal Information -->
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td class="fw-bold text-start">Name</td>
+                        <td class="text-end">{{ profile['username'] }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-start">Email</td>
+                        <td class="text-end">{{ profile['email'] }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold text-start">Enable Multi-Factor Authentication</td>
+                        <td class="text-end">
+                            <input class="form-check-input" type="checkbox" id="2fa" name="2fa" {% if profile['mfactor'] %}checked{% endif %}>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+            <button class="btn btn-secondary" type="button" onclick="window.location.href='/changepass'">Change Password</button>
+        </form>
+    </div>
+{% endblock %}
