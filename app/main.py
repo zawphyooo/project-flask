@@ -123,11 +123,23 @@ def login():
         rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
             return apology("invalid email and/or password")
-
+        
         usr_id = rows[0]["id"]
         user = rows[0]["username"]
         email = rows[0]["email"]
 
+        if rows[0]['verified'] == 0:
+            from app.email import generate_token
+            from app.email import send_email
+
+            token=generate_token(email)
+            db.execute("UPDATE users SET token = ? WHERE email = ?", token, email)
+            verify_url = url_for('main.verifyemail',token=token,_external=True)
+            subject = "Flask Server email verification"
+            text_body = f"Please use this: {verify_url} to verify your account"
+            html_body = f"<p>Hi {user},</p></br><p>Please use this <a href='{verify_url}'>Link</a> to verify your account</p> </br> <p>Flask Server</p>"
+            message, status_code = send_email(subject, [email], text_body, html_body)
+            return render_template("verifyMailSent.html", user=user, email=email)
         
         if rows[0]["mfactor"] == 1:
             print("MFA Enabled")
@@ -220,17 +232,31 @@ def register():
         usrpwd = request.form.get("password")
         usrpwdHash = generate_password_hash(usrpwd)
         
+        email = request.form.get("email")
+
         #Check if the email already exists 
-        rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
+        rows = db.execute("SELECT * FROM users WHERE email = ?", email)
         if len(rows) != 1:
             db.execute("INSERT INTO users (username, hash, email) VALUES (?, ?, ?)", request.form.get("username"), usrpwdHash, request.form.get("email"))
         else:
             return apology("email " + rows[0]['email'] + " already exists")
         
-        user = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
+        rows = db.execute("SELECT * FROM users WHERE email = ?", request.form.get("email"))
+        user = rows[0]['username']
 
-        session["user_id"] = user[0]["id"]
-        return redirect("/")
+        from app.email import generate_token
+        from app.email import send_email
+        token=generate_token(email)
+        db.execute("UPDATE users SET token = ? WHERE email = ?", token, email)
+        verify_url = url_for('main.verifyemail',token=token,_external=True)
+        subject = "Flask Server email verification"
+        text_body = f"Please use this: {verify_url} to verify your account"
+        html_body = f"<p>Hi {user},</p></br><p>Please use this <a href='{verify_url}'>Link</a> to verify your account</p> </br> <p>Flask Server</p>"
+        message, status_code = send_email(subject, [email], text_body, html_body)
+        return render_template("verifyMailSent.html", user=user, email=email)
+        
+
+
 
     else:
         return render_template("register.html")
@@ -312,7 +338,7 @@ def forgetpass():
             # Send the email with the reset link
             subject = "Flask Server Password Reset"
             text_body = f"Please click the following link to reset your password: {reset_url}"
-            html_body = f"<p>Please click the following link to reset your password:</p><p><a href='{reset_url}'>{reset_url}</a></p> </br> <p>Flask Server</p>"
+            html_body = f"<p>Please click the following link to reset your password:</p><p><a href='{reset_url}'>Link to Reset Password</a></p> </br> <p>Flask Server</p>"
             
             message, status_code = send_email(subject, [email], text_body, html_body)
             flash(message)
@@ -328,7 +354,7 @@ def forgetpass():
 @main.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
     token = request.args.get('token')
-    print(f"Token {token}")
+    #print(f"Token {token}")
     if not token:
         return apology("Invalid or missing token", 400)
     
@@ -404,4 +430,23 @@ def sendOtp(usr_id, user, email):
     message, status_code = send_email(subject, [email], text_body, html_body)
     return message, status_code
     # to add return for failure or success [todo]
+
+
+@main.route("/verifyemail", methods=["GET", "POST"])
+def verifyemail():
+    token = request.args.get('token')
+    if not token:
+        return apology("Invalid or missing token")
+    
+    # Find the user by the token
+    user = db.execute("SELECT * FROM users WHERE token = ?", token)
+
+    if not user:
+        return apology("Invalid or expired token")
+    
+    else:
+        db.execute("UPDATE users SET verified = 1, token = NULL WHERE id = ?", user[0]["id"])
+        session['user_id'] = user[0]["id"]
+        flash("Email Verified Successfully")
+        return redirect("/")
 
