@@ -1,0 +1,42 @@
+.
+├── README.md
+├── app
+│   ├── __init__.py
+│   ├── config.py
+│   ├── email.py
+│   ├── helpers.py
+│   ├── main.py
+│   ├── otp.py
+│   ├── static
+│   │   ├── I_heart_validator.png
+│   │   ├── favicon.ico
+│   │   └── styles.css
+│   └── templates
+│       ├── apology.html
+│       ├── buypage.html
+│       ├── changepass.html
+│       ├── forgetpass.html
+│       ├── history.html
+│       ├── index.html
+│       ├── layout.html
+│       ├── login.html
+│       ├── mfa.html
+│       ├── profile.html
+│       ├── quote.html
+│       ├── quoted.html
+│       ├── register.html
+│       ├── reset_password.html
+│       ├── sell.html
+│       └── verifyMailSent.html
+├── email_credentials.db
+├── file.txt
+├── finance.db
+├── flask_session
+├── flaskenv
+│   ├── bin
+│   ├── lib
+│   └── pyvenv.cfg
+├── requirements.txt
+├── run_flask_mac.sh
+└── setup_db_for_admin_email
+

@@ -8,4 +8,6 @@ export FLASK_APP=app
 export FLASK_DEBUG=1
 
 # Run Flask application
-flask run --host=192.168.1.119 --port=5005
+#flask run --host=192.168.1.119 --port=5005
+
+flask run --host=0.0.0.0 --port=5005

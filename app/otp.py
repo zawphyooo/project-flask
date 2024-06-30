@@ -12,7 +12,7 @@ def generate_otp(length=6):
 def store_otp(user_id, otp):
     created_at = datetime.datetime.now()
     db.execute("INSERT INTO otps (user_id, otp, created_at) VALUES (?, ?, ?)", user_id, otp, created_at)
-
+# to add return code for success or failure [todo]
 
 # Function to validate OTP
 def validate_otp(user_id, input_otp, expiry_minutes=5):
@@ -26,3 +26,6 @@ def validate_otp(user_id, input_otp, expiry_minutes=5):
         if otp == input_otp and (now - created_at).total_seconds() <= expiry_minutes * 60:
             return True
     return False
+
+
+    
